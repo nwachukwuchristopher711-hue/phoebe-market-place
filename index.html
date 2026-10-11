@@ -498,7 +498,7 @@ function viewRecovery() {
 sb.auth.onAuthStateChange((event, session) => {
   user = session ? session.user : null;
   if (event === 'PASSWORD_RECOVERY') recovering = true;
-  setTimeout(route, 0);
+ if (window.__uid === (user ? user.id : null) && event !== 'PASSWORD_RECOVERY') return; window.__uid = user ? user.id : null; setTimeout(route, 0);
 });
 sb.auth.getSession().then(({ data }) => { user = data.session ? data.session.user : null; route(); });
 </script>
