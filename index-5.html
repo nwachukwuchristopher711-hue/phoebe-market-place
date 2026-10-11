@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1210">
+<meta name="color-scheme" content="dark">
+<title>Phoebe Market Place</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0a1210;--card:#101c17;--card2:#15261f;--line:#1f3329;--text:#eaf5ee;--muted:#8fa89a;--green:#22c55e;--green-d:#16a34a;--gold:#f5b942;--red:#ef5350}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.45;padding-bottom:92px}
+a{color:var(--green)}
+header{background:var(--bg);padding:14px 16px 6px;position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--green);color:#04210f;font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center}
+header h1{font-size:19px;line-height:1.1}
+header h1 span{color:var(--green)}
+header small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:2px}
+main{max-width:760px;margin:0 auto;padding:10px 16px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#0d1814;border-top:1px solid var(--line);display:flex;align-items:flex-end;z-index:7;padding-bottom:env(safe-area-inset-bottom)}
+nav a{flex:1;text-align:center;padding:9px 2px 10px;color:var(--muted);text-decoration:none;font-size:11px;font-weight:600}
+nav a b{display:block;font-size:20px;line-height:1.1;font-weight:400}
+nav a.on{color:var(--green)}
+nav a.plus b{width:54px;height:54px;border-radius:50%;background:var(--green);color:#04210f;font-size:30px;line-height:54px;margin:-24px auto 3px;border:4px solid var(--bg);font-weight:700}
+nav a.plus{color:var(--text)}
+input,select,textarea,button{font:inherit}
+input,select,textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);margin-top:5px}
+input::placeholder,textarea::placeholder{color:#5f776a}
+textarea{min-height:110px;resize:vertical}
+input[type=file]{padding:10px}
+label{display:block;font-weight:600;font-size:14px;margin-top:14px}
+button,.btn{display:inline-block;border:0;border-radius:12px;padding:13px 18px;font-weight:700;background:var(--green);color:#04210f;cursor:pointer;text-align:center;text-decoration:none}
+button.full,.btn.full{width:100%;margin-top:16px}
+button.alt{background:transparent;color:var(--green);border:1px solid var(--green)}
+button.danger{background:var(--red);color:#fff}
+button:disabled{opacity:.55}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.search{display:flex;gap:8px;margin:6px 0 14px}
+.search input{margin:0;border-radius:24px;padding-left:18px}
+.search button{border-radius:24px;padding:0 18px}
+.hero{background:linear-gradient(135deg,#0f3d22 0%,#0b2a1a 55%,#0a1c13 100%);border:1px solid #1c4a2f;border-radius:20px;padding:22px 20px;margin-bottom:16px}
+.hero h2{font-size:27px;line-height:1.12;margin:0 0 8px}
+.hero h2 em{color:var(--green);font-style:normal}
+.hero p{color:#b6d3c2;margin-bottom:16px;font-size:15px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.quick a{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 4px;text-align:center;text-decoration:none;color:var(--text);font-size:12px;font-weight:600}
+.quick a b{display:block;font-size:24px;font-weight:400;margin-bottom:2px}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 10px}
+.sec h3{font-size:18px}
+.sec a{font-size:14px;text-decoration:none;font-weight:600}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.cats a{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 4px 10px;text-align:center;text-decoration:none;color:var(--text);font-size:11.5px;font-weight:600;line-height:1.2}
+.cats a b{display:block;font-size:26px;font-weight:400;margin-bottom:4px}
+.catlist a{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:8px;text-decoration:none;color:var(--text)}
+.catlist .ic{width:48px;height:48px;border-radius:12px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:26px;flex:none}
+.catlist strong{display:block}
+.catlist span{color:var(--muted);font-size:13px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-weight:600;font-size:14px}
+.chips button.on{background:var(--green);color:#04210f;border-color:var(--green)}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.filters input,.filters select{margin-top:0}
+.filters .wide{grid-column:1/3}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;display:block}
+.card .ph{aspect-ratio:1/1;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:34px}
+.card img{width:100%;height:100%;object-fit:cover;display:block}
+.card .b{padding:10px 12px 12px}
+.card .t{font-weight:600;font-size:14.5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.6em}
+.price{font-weight:800;color:var(--green);font-size:17px}
+.small{font-size:13px;color:var(--muted)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.msg{padding:11px 13px;border-radius:12px;margin:12px 0;font-size:14px}
+.msg.err{background:#3a1816;color:#ffb4ae}
+.msg.ok{background:#12301f;color:#9be7b8}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;background:var(--card);color:var(--text);border:1px solid var(--line)}
+.tabs button.on{background:var(--green);color:#04210f;border-color:var(--green)}
+.gallery{display:flex;gap:8px;overflow-x:auto;margin:10px 0 14px;border-radius:16px}
+.gallery img{height:300px;border-radius:16px;flex:none;max-width:92%;object-fit:cover}
+.nophoto{height:200px;border-radius:16px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:48px;margin:10px 0 14px}
+.tag{display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:4px 12px;font-size:13px;margin:0 6px 6px 0}
+.seller{display:flex;align-items:center;gap:12px}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--green);color:#04210f;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;flex:none}
+.empty{text-align:center;color:var(--muted);padding:34px 10px}
+.row{display:flex;gap:8px;margin-top:12px}
+.row button{flex:1}
+.spin{text-align:center;padding:30px;color:var(--muted)}
+.previews{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.previews img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.back{display:inline-block;text-decoration:none;font-size:14px;font-weight:600;margin-top:4px}
+h2.page{font-size:22px;margin:6px 0 12px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">P</div>
+  <h1>Phoebe <span>Market Place</span><small>Buy &bull; Sell &bull; Connect</small></h1>
+</header>
+<main id="app"><div class="spin">Loading…</div></main>
+<nav>
+  <a href="#/" id="n-home"><b>&#127968;</b>Home</a>
+  <a href="#/categories" id="n-cats"><b>&#9638;</b>Categories</a>
+  <a href="#/sell" id="n-sell" class="plus"><b>+</b>Sell</a>
+  <a href="#/messages" id="n-msg"><b>&#128172;</b>Messages</a>
+  <a href="#/account" id="n-account"><b>&#128100;</b>Profile</a>
+</nav>
+
+<script>
+// ---- Settings (publishable key only: safe for public apps) ----
+const SUPABASE_URL = 'https://vmnxbsqsdvkmiqzyfcxo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_jdg2dYI_6PqRl1YCYQFvQQ_Gv35QnNn';
+const BUCKET = 'product-images';
+const MAX_IMAGES = 4;
+const MAX_BYTES = 5 * 1024 * 1024;
+const OK_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+const STATES = ['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT Abuja','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'];
+const CATS = [
+  { n: 'Phones & Tablets', e: '\u{1F4F1}', d: 'Phones, tablets and accessories' },
+  { n: 'Electronics', e: '\u{1F4BB}', d: 'TVs, laptops, appliances' },
+  { n: 'Fashion', e: '\u{1F457}', d: 'Clothes, shoes, bags and accessories' },
+  { n: 'Home & Garden', e: '\u{1F6CB}\uFE0F', d: 'Furniture, decor, kitchen and garden' },
+  { n: 'Vehicles', e: '\u{1F697}', d: 'Cars, bikes, trucks, spare parts' },
+  { n: 'Property', e: '\u{1F3E0}', d: 'Land, houses, apartments, shops' },
+  { n: 'Beauty & Health', e: '\u{1F484}', d: 'Skincare, haircare, wellness' },
+  { n: 'Food & Agriculture', e: '\u{1F33E}', d: 'Fresh food, farm produce, livestock' },
+  { n: 'Services', e: '\u{1F6E0}\uFE0F', d: 'Repairs, tutoring, delivery, events' },
+  { n: 'Other', e: '\u2026', d: 'Everything else' }
+];
+const CATEGORIES = CATS.map(c => c.n);
+const CONDITIONS = ['New', 'Used', 'Refurbished'];
+const catIcon = n => { const c = CATS.find(x => x.n === n); return c ? c.e : '\u{1F6CD}\uFE0F'; };
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const app = document.getElementById('app');
+let user = null;
+let recovering = false;
+const filters = { search: '', category: '', state: '', sort: 'new' };
+
+// ---- Helpers ----
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const naira = k => '\u20A6' + (Number(k) / 100).toLocaleString('en-NG', { maximumFractionDigits: 2 });
+const opts = (list, sel, blank) => (blank ? `<option value="">${esc(blank)}</option>` : '') + list.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+const firstImg = p => (Array.isArray(p.image_urls) && p.image_urls[0]) || '';
+const msg = (type, text) => text ? `<div class="msg ${type}" role="alert">${esc(text)}</div>` : '';
+const nice = e => {
+  const t = (e && e.message) || String(e);
+  if (/Invalid login/i.test(t)) return 'Wrong email or password.';
+  if (/already registered/i.test(t)) return 'This email already has an account. Try logging in.';
+  if (/row-level security/i.test(t)) return 'You are not allowed to do that.';
+  if (/Failed to fetch|NetworkError/i.test(t)) return 'No internet connection. Check your data and try again.';
+  return t;
+};
+function card(p, extra) {
+  return `<a class="card" href="#/p/${encodeURIComponent(p.id)}">
+    <div class="ph">${firstImg(p) ? `<img loading="lazy" src="${esc(firstImg(p))}" alt="">` : catIcon(p.category)}</div>
+    <div class="b"><div class="t">${esc(p.title)}</div><div class="price">${naira(p.price_kobo)}</div>
+    <div class="small">${esc(extra || [p.city, p.state].filter(Boolean).join(', '))}</div></div></a>`;
+}
+function setNav() {
+  const h = location.hash || '#/';
+  ['home', 'cats', 'sell', 'msg', 'account'].forEach(k => document.getElementById('n-' + k).classList.remove('on'));
+  const k = h.startsWith('#/categories') ? 'cats' : h.startsWith('#/sell') ? 'sell' : h.startsWith('#/messages') ? 'msg' : h.startsWith('#/account') ? 'account' : 'home';
+  document.getElementById('n-' + k).classList.add('on');
+}
+
+// ---- Router ----
+async function route() {
+  setNav();
+  if (recovering) return viewRecovery();
+  const h = location.hash || '#/';
+  window.scrollTo(0, 0);
+  try {
+    if (h.startsWith('#/p/')) return await viewProduct(decodeURIComponent(h.slice(4)));
+    if (h.startsWith('#/sell')) return viewSell();
+    if (h.startsWith('#/account')) return await viewAccount();
+    if (h.startsWith('#/categories')) return viewCategories();
+    if (h.startsWith('#/browse')) return viewBrowse();
+    if (h.startsWith('#/messages')) return viewMessages();
+    return await viewHome();
+  } catch (e) {
+    app.innerHTML = msg('err', nice(e)) + '<button class="full" onclick="route()">Try again</button>';
+  }
+}
+window.addEventListener('hashchange', route);
+
+// ---- Home ----
+async function viewHome() {
+  app.innerHTML = `
+    <form class="search" id="h-form"><input id="h-search" type="search" placeholder="Search for products" aria-label="Search products"><button>Search</button></form>
+    <div class="hero">
+      <h2>Everything you need in <em>one place</em></h2>
+      <p>Shop from sellers across Nigeria, find great deals, and grow your business.</p>
+      <a class="btn" href="#/browse">Start shopping</a>
+    </div>
+    <div class="quick">
+      <a href="#/browse"><b>&#128722;</b>Buy</a>
+      <a href="#/sell"><b>&#127991;&#65039;</b>Sell</a>
+      <a href="#/messages"><b>&#128172;</b>Chat</a>
+      <a href="#/account"><b>&#128230;</b>My listings</a>
+    </div>
+    <div class="sec"><h3>Shop by category</h3><a href="#/categories">See all</a></div>
+    <div class="cats">${CATS.slice(0, 8).map((c, i) => `<a href="#/browse" data-cat="${i}"><b>${c.e}</b>${esc(c.n)}</a>`).join('')}</div>
+    <div class="sec"><h3>Fresh listings</h3><a href="#/browse">See all</a></div>
+    <div id="fresh"><div class="spin">Loading…</div></div>
+    <div class="hero" style="margin-top:18px"><h2 style="font-size:22px">Sell your products and grow your business</h2>
+      <p>Reach buyers in every state.</p><a class="btn" href="#/sell">Start selling</a></div>`;
+  document.getElementById('h-form').onsubmit = e => { e.preventDefault(); filters.search = document.getElementById('h-search').value; filters.category = ''; location.hash = '#/browse'; };
+  app.querySelectorAll('.cats a').forEach(a => a.addEventListener('click', () => { filters.category = CATS[a.dataset.cat].n; filters.search = ''; }));
+  const { data, error } = await sb.from('products').select('id,title,price_kobo,category,state,city,image_urls').eq('status', 'active').order('created_at', { ascending: false }).limit(6);
+  const box = document.getElementById('fresh');
+  if (!box) return;
+  if (error) box.innerHTML = msg('err', nice(error));
+  else if (!data.length) box.innerHTML = '<div class="empty">No listings yet.<br><a href="#/sell">Post the first one</a></div>';
+  else box.innerHTML = '<div class="grid">' + data.map(p => card(p)).join('') + '</div>';
+}
+
+// ---- Categories ----
+function viewCategories() {
+  app.innerHTML = '<h2 class="page">Categories</h2><div class="catlist">' +
+    CATS.map((c, i) => `<a href="#/browse" data-cat="${i}"><div class="ic">${c.e}</div><div><strong>${esc(c.n)}</strong><span>${esc(c.d)}</span></div></a>`).join('') + '</div>';
+  app.querySelectorAll('.catlist a').forEach(a => a.addEventListener('click', () => { filters.category = CATS[a.dataset.cat].n; filters.search = ''; }));
+}
+
+// ---- Browse: search, filter, sort ----
+function viewBrowse() {
+  app.innerHTML = `
+    <h2 class="page">Browse</h2>
+    <div class="chips" id="chips"></div>
+    <div class="filters">
+      <input class="wide" id="f-search" type="search" placeholder="Search products" value="${esc(filters.search)}">
+      <select id="f-state">${opts(STATES, filters.state, 'All Nigeria')}</select>
+      <select id="f-sort">
+        <option value="new" ${filters.sort === 'new' ? 'selected' : ''}>Newest first</option>
+        <option value="low" ${filters.sort === 'low' ? 'selected' : ''}>Price: low to high</option>
+        <option value="high" ${filters.sort === 'high' ? 'selected' : ''}>Price: high to low</option>
+      </select>
+    </div>
+    <div id="list"><div class="spin">Loading products…</div></div>`;
+  const drawChips = () => {
+    const box = document.getElementById('chips');
+    box.innerHTML = '<button data-c="">All</button>' + CATEGORIES.map(c => `<button data-c="${esc(c)}">${esc(c)}</button>`).join('');
+    box.querySelectorAll('button').forEach(b => {
+      if (b.dataset.c === filters.category) b.classList.add('on');
+      b.onclick = () => { filters.category = b.dataset.c; drawChips(); loadList(); };
+    });
+  };
+  drawChips();
+  let timer;
+  document.getElementById('f-search').addEventListener('input', e => { filters.search = e.target.value; clearTimeout(timer); timer = setTimeout(loadList, 400); });
+  document.getElementById('f-state').addEventListener('change', e => { filters.state = e.target.value; loadList(); });
+  document.getElementById('f-sort').addEventListener('change', e => { filters.sort = e.target.value; loadList(); });
+  loadList();
+}
+async function loadList() {
+  const box = document.getElementById('list');
+  if (!box) return;
+  box.innerHTML = '<div class="spin">Loading products…</div>';
+  let q = sb.from('products').select('id,title,price_kobo,category,state,city,image_urls,created_at').eq('status', 'active');
+  const term = filters.search.replace(/[%_,()*\\]/g, ' ').trim();
+  if (term) q = q.ilike('title', '%' + term + '%');
+  if (filters.category) q = q.eq('category', filters.category);
+  if (filters.state) q = q.eq('state', filters.state);
+  if (filters.sort === 'low') q = q.order('price_kobo', { ascending: true });
+  else if (filters.sort === 'high') q = q.order('price_kobo', { ascending: false });
+  else q = q.order('created_at', { ascending: false });
+  const { data, error } = await q.limit(60);
+  if (!document.getElementById('list')) return;
+  if (error) { box.innerHTML = msg('err', nice(error)); return; }
+  if (!data.length) { box.innerHTML = '<div class="empty">No products found.<br>Try a different search or category, or <a href="#/sell">sell something</a>.</div>'; return; }
+  box.innerHTML = '<div class="grid">' + data.map(p => card(p)).join('') + '</div>';
+}
+
+// ---- Product detail ----
+async function viewProduct(id) {
+  app.innerHTML = '<div class="spin">Loading…</div>';
+  const { data: p, error } = await sb.from('products').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!p) { app.innerHTML = '<div class="empty">This product is no longer available.<br><a href="#/browse">Back to browse</a></div>'; return; }
+  let seller = null;
+  const r = await sb.from('public_profiles').select('display_name,city,state,is_verified').eq('id', p.seller_id).maybeSingle();
+  if (!r.error) seller = r.data;
+  const imgs = Array.isArray(p.image_urls) ? p.image_urls : [];
+  const mine = user && user.id === p.seller_id;
+  const sname = seller && seller.display_name ? seller.display_name : 'Seller';
+  app.innerHTML = `
+    <a href="javascript:history.back()" class="back">&larr; Back</a>
+    ${imgs.length ? '<div class="gallery">' + imgs.map(u => `<img src="${esc(u)}" alt="">`).join('') + '</div>' : `<div class="nophoto">${catIcon(p.category)}</div>`}
+    <h2 class="page" style="margin-bottom:4px">${esc(p.title)}</h2>
+    <div class="price" style="font-size:26px;margin-bottom:8px">${naira(p.price_kobo)}</div>
+    <div>${p.condition ? `<span class="tag">${esc(p.condition)}</span>` : ''}${p.category ? `<span class="tag">${esc(p.category)}</span>` : ''}<span class="tag">${esc([p.city, p.state].filter(Boolean).join(', '))}</span></div>
+    ${p.status !== 'active' ? `<div class="msg err">This item is ${esc(p.status)}.</div>` : ''}
+    <div class="panel" style="margin-top:8px"><strong>Description</strong><p style="margin-top:6px;white-space:pre-wrap">${esc(p.description || 'No description.')}</p></div>
+    <div class="panel seller"><div class="avatar">${esc(sname.charAt(0).toUpperCase())}</div>
+      <div><strong>${esc(sname)}</strong>${seller && seller.is_verified ? ' &#10003; verified' : ''}<div class="small">${esc(seller ? [seller.city, seller.state].filter(Boolean).join(', ') : '')}</div></div></div>
+    ${mine ? `<div class="row"><button class="alt" id="b-sold">Mark as sold</button><button class="danger" id="b-del">Delete</button></div><div id="pmsg"></div>`
+           : `<div class="msg ok">Ordering and chat with the seller are coming in the next update.</div>`}`;
+  if (mine) {
+    document.getElementById('b-sold').onclick = async () => {
+      const { error } = await sb.from('products').update({ status: 'sold' }).eq('id', p.id);
+      document.getElementById('pmsg').innerHTML = error ? msg('err', nice(error)) : msg('ok', 'Marked as sold.');
+    };
+    document.getElementById('b-del').onclick = async () => {
+      if (!confirm('Delete this listing permanently?')) return;
+      const { error } = await sb.from('products').delete().eq('id', p.id);
+      if (error) document.getElementById('pmsg').innerHTML = msg('err', nice(error));
+      else location.hash = '#/account';
+    };
+  }
+}
+
+// ---- Messages (placeholder until chat is built) ----
+function viewMessages() {
+  app.innerHTML = `<h2 class="page">Messages</h2><div class="panel empty"><div style="font-size:42px">&#128172;</div>
+    <p style="margin-top:8px"><strong style="color:var(--text)">Chat is coming next.</strong><br>Soon you will message sellers and buyers privately from here.</p></div>`;
+}
+
+// ---- Sell ----
+function viewSell() {
+  if (!user) {
+    app.innerHTML = '<div class="panel empty">Log in or register to sell.<br><br><a class="btn" href="#/account">Go to Profile</a></div>';
+    return;
+  }
+  app.innerHTML = `
+    <h2 class="page">Sell a product</h2>
+    <div class="panel">
+      <label>Title<input id="s-title" maxlength="100" placeholder="e.g. Tecno Spark 10, 128GB"></label>
+      <label>Description<textarea id="s-desc" maxlength="2000" placeholder="Describe the item, any faults, delivery options"></textarea></label>
+      <label>Price in naira (\u20A6)<input id="s-price" type="number" inputmode="decimal" min="1" step="any" placeholder="e.g. 85000"></label>
+      <label>Category<select id="s-cat">${opts(CATEGORIES, '')}</select></label>
+      <label>Condition<select id="s-cond">${opts(CONDITIONS, '')}</select></label>
+      <label>State<select id="s-state">${opts(STATES, '', 'Choose state')}</select></label>
+      <label>City or town<input id="s-city" maxlength="60" placeholder="e.g. Ikeja"></label>
+      <label>Photos (up to ${MAX_IMAGES}, JPG/PNG/WebP, max 5 MB each)<input id="s-files" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+      <div class="previews" id="s-prev"></div>
+      <div id="s-msg"></div>
+      <button class="full" id="s-go">Publish listing</button>
+    </div>`;
+  document.getElementById('s-files').addEventListener('change', e => {
+    const box = document.getElementById('s-prev'); box.innerHTML = '';
+    [...e.target.files].slice(0, MAX_IMAGES).forEach(f => { const i = document.createElement('img'); i.src = URL.createObjectURL(f); box.appendChild(i); });
+  });
+  document.getElementById('s-go').onclick = publish;
+}
+async function publish() {
+  const out = document.getElementById('s-msg');
+  const btn = document.getElementById('s-go');
+  const title = document.getElementById('s-title').value.trim();
+  const description = document.getElementById('s-desc').value.trim();
+  const price = parseFloat(document.getElementById('s-price').value);
+  const state = document.getElementById('s-state').value;
+  const city = document.getElementById('s-city').value.trim();
+  const files = [...document.getElementById('s-files').files];
+  if (title.length < 3) return out.innerHTML = msg('err', 'Enter a title (at least 3 characters).');
+  if (!isFinite(price) || price <= 0 || price > 1e9) return out.innerHTML = msg('err', 'Enter a valid price greater than zero.');
+  if (!state) return out.innerHTML = msg('err', 'Choose a state.');
+  if (!city) return out.innerHTML = msg('err', 'Enter your city or town.');
+  if (files.length > MAX_IMAGES) return out.innerHTML = msg('err', 'Choose at most ' + MAX_IMAGES + ' photos.');
+  for (const f of files) {
+    if (!OK_TYPES.includes(f.type)) return out.innerHTML = msg('err', f.name + ' is not a JPG, PNG or WebP image.');
+    if (f.size > MAX_BYTES) return out.innerHTML = msg('err', f.name + ' is bigger than 5 MB.');
+  }
+  btn.disabled = true; btn.textContent = 'Publishing…'; out.innerHTML = '';
+  try {
+    const urls = [];
+    for (const f of files) {
+      const ext = f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg';
+      const path = user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const up = await sb.storage.from(BUCKET).upload(path, f, { contentType: f.type, upsert: false });
+      if (up.error) throw up.error;
+      urls.push(sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
+    }
+    const row = {
+      seller_id: user.id, title, description, price_kobo: Math.round(price * 100),
+      category: document.getElementById('s-cat').value, condition: document.getElementById('s-cond').value,
+      state, city, image_urls: urls, status: 'active'
+    };
+    const { data, error } = await sb.from('products').insert(row).select('id').single();
+    if (error) throw error;
+    location.hash = '#/p/' + encodeURIComponent(data.id);
+  } catch (e) {
+    out.innerHTML = msg('err', nice(e));
+    btn.disabled = false; btn.textContent = 'Publish listing';
+  }
+}
+
+// ---- Profile / auth ----
+let authTab = 'login';
+async function viewAccount() {
+  if (!user) return viewAuth();
+  app.innerHTML = '<div class="spin">Loading…</div>';
+  const { data: pr } = await sb.from('profiles').select('display_name,phone,role,state,city').eq('id', user.id).maybeSingle();
+  const p = pr || {};
+  const { data: mine } = await sb.from('products').select('id,title,price_kobo,status,category,image_urls').eq('seller_id', user.id).order('created_at', { ascending: false });
+  const nm = p.display_name || user.email;
+  app.innerHTML = `
+    <div class="panel seller"><div class="avatar">${esc(nm.charAt(0).toUpperCase())}</div>
+      <div><strong>${esc(nm)}</strong><div class="small">${esc(user.email)} &bull; ${esc(p.role || 'buyer')}</div></div></div>
+    <div class="panel">
+      <strong>Edit profile</strong>
+      <label>Name<input id="a-name" maxlength="60" value="${esc(p.display_name)}"></label>
+      <label>Phone (private, only you can see it)<input id="a-phone" type="tel" maxlength="20" value="${esc(p.phone)}"></label>
+      <label>State<select id="a-state">${opts(STATES, p.state, 'Choose state')}</select></label>
+      <label>City or town<input id="a-city" maxlength="60" value="${esc(p.city)}"></label>
+      <div id="a-msg"></div>
+      <button class="full" id="a-save">Save changes</button>
+    </div>
+    <div class="sec"><h3>My listings</h3><a href="#/sell">Add new</a></div>
+    ${(mine && mine.length) ? '<div class="grid">' + mine.map(x => card(x, x.status)).join('') + '</div>'
+      : '<div class="empty">You have not listed anything yet.<br><a href="#/sell">Sell your first product</a></div>'}
+    <button class="full alt" id="a-out">Log out</button>`;
+  document.getElementById('a-save').onclick = async () => {
+    const out = document.getElementById('a-msg');
+    const { error } = await sb.from('profiles').update({
+      display_name: document.getElementById('a-name').value.trim(),
+      phone: document.getElementById('a-phone').value.trim(),
+      state: document.getElementById('a-state').value || null,
+      city: document.getElementById('a-city').value.trim()
+    }).eq('id', user.id);
+    out.innerHTML = error ? msg('err', nice(error)) : msg('ok', 'Saved.');
+  };
+  document.getElementById('a-out').onclick = async () => { await sb.auth.signOut(); };
+}
+function viewAuth(note) {
+  app.innerHTML = `
+    <h2 class="page">${authTab === 'login' ? 'Welcome back' : authTab === 'register' ? 'Create your account' : 'Reset your password'}</h2>
+    <div class="tabs">
+      <button class="${authTab === 'login' ? 'on' : ''}" data-t="login">Log in</button>
+      <button class="${authTab === 'register' ? 'on' : ''}" data-t="register">Register</button>
+      <button class="${authTab === 'reset' ? 'on' : ''}" data-t="reset">Forgot</button>
+    </div>
+    <div class="panel">
+      ${authTab === 'register' ? `<label>Your name<input id="u-name" maxlength="60" autocomplete="name"></label>` : ''}
+      <label>Email<input id="u-email" type="email" autocomplete="email" inputmode="email"></label>
+      ${authTab !== 'reset' ? `<label>Password${authTab === 'register' ? ' (at least 8 characters)' : ''}<input id="u-pass" type="password" autocomplete="${authTab === 'login' ? 'current-password' : 'new-password'}"></label>` : ''}
+      ${authTab === 'register' ? `<label>I want to<select id="u-role"><option value="buyer">Buy</option><option value="seller">Sell</option><option value="both">Buy and sell</option></select></label>` : ''}
+      <div id="u-msg">${note || ''}</div>
+      <button class="full" id="u-go">${authTab === 'login' ? 'Log in' : authTab === 'register' ? 'Create account' : 'Send reset link'}</button>
+    </div>`;
+  app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { authTab = b.dataset.t; viewAuth(); });
+  document.getElementById('u-go').onclick = doAuth;
+}
+async function doAuth() {
+  const out = document.getElementById('u-msg'), btn = document.getElementById('u-go');
+  const email = document.getElementById('u-email').value.trim();
+  const passEl = document.getElementById('u-pass');
+  const pass = passEl ? passEl.value : '';
+  if (!/^\S+@\S+\.\S+$/.test(email)) return out.innerHTML = msg('err', 'Enter a valid email address.');
+  const label = btn.textContent;
+  const back = location.origin + location.pathname;
+  btn.disabled = true; btn.textContent = 'Please wait…';
+  try {
+    if (authTab === 'login') {
+      if (!pass) throw new Error('Enter your password.');
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+    } else if (authTab === 'register') {
+      const name = document.getElementById('u-name').value.trim();
+      if (name.length < 2) throw new Error('Enter your name.');
+      if (pass.length < 8) throw new Error('Password must be at least 8 characters.');
+      const { data, error } = await sb.auth.signUp({ email, password: pass,
+        options: { emailRedirectTo: back, data: { display_name: name, role: document.getElementById('u-role').value } } });
+      if (error) throw error;
+      if (!data.session) {
+        out.innerHTML = msg('ok', 'Account created. Check your email and tap the confirmation link, then log in.');
+        btn.disabled = false; btn.textContent = label; return;
+      }
+    } else {
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: back });
+      if (error) throw error;
+      out.innerHTML = msg('ok', 'If that email has an account, a reset link is on its way.');
+      btn.disabled = false; btn.textContent = label; return;
+    }
+  } catch (e) {
+    out.innerHTML = msg('err', nice(e));
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+function viewRecovery() {
+  app.innerHTML = `<h2 class="page">Set a new password</h2><div class="panel">
+    <label>New password (at least 8 characters)<input id="r-pass" type="password" autocomplete="new-password"></label>
+    <div id="r-msg"></div><button class="full" id="r-go">Save new password</button></div>`;
+  document.getElementById('r-go').onclick = async () => {
+    const p = document.getElementById('r-pass').value, out = document.getElementById('r-msg');
+    if (p.length < 8) return out.innerHTML = msg('err', 'Password must be at least 8 characters.');
+    const { error } = await sb.auth.updateUser({ password: p });
+    if (error) return out.innerHTML = msg('err', nice(error));
+    recovering = false; location.hash = '#/account'; route();
+  };
+}
+
+// ---- Start ----
+sb.auth.onAuthStateChange((event, session) => {
+  user = session ? session.user : null;
+  if (event === 'PASSWORD_RECOVERY') recovering = true;
+  setTimeout(route, 0);
+});
+sb.auth.getSession().then(({ data }) => { user = data.session ? data.session.user : null; route(); });
+</script>
+</body>
+</html>
