@@ -503,5 +503,6 @@ sb.auth.onAuthStateChange((event, session) => {
 });
 sb.auth.getSession().then(({ data }) => { user = data.session ? data.session.user : null; route(); });
 </script>
+<script src="chat.js"></script><script>if(/^#\/(p|messages)/.test(location.hash))route();</script>
 </body>
 </html>
