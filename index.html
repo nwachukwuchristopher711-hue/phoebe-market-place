@@ -204,6 +204,7 @@ async function viewHome() {
       <a href="#/messages"><b>&#128172;</b>Chat</a>
       <a href="#/account"><b>&#128230;</b>My listings</a>
     </div>
+    <a href="safety.html" class="hero" style="display:block;margin-bottom:16px;padding:14px 16px;text-decoration:none;color:inherit"><strong>&#128274; Stay safe: read this before you buy</strong><br><span style="color:#b6d3c2;font-size:14px">Contact the seller, confirm the price and agree a meeting point first.</span></a>
     <div class="sec"><h3>Shop by category</h3><a href="#/categories">See all</a></div>
     <div class="cats">${CATS.slice(0, 8).map((c, i) => `<a href="#/browse" data-cat="${i}"><b>${c.e}</b>${esc(c.n)}</a>`).join('')}</div>
     <div class="sec"><h3>Fresh listings</h3><a href="#/browse">See all</a></div>
