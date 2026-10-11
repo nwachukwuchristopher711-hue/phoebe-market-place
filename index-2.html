@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b5d3b">
+<title>Phoebe Market Place</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--green:#0b5d3b;--green-d:#08452c;--gold:#f2a900;--ink:#14201a;--muted:#5d6b63;--line:#d8e0db;--bg:#f3f6f4;--card:#fff;--red:#b3261e}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;padding-bottom:76px}
+header{background:var(--green);color:#fff;padding:12px 14px;position:sticky;top:0;z-index:5}
+header h1{font-size:20px;letter-spacing:.2px}
+header h1 span{color:var(--gold)}
+main{max-width:720px;margin:0 auto;padding:14px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:5}
+nav a{flex:1;text-align:center;padding:12px 4px;color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
+nav a.on{color:var(--green);box-shadow:inset 0 3px 0 var(--green)}
+input,select,textarea,button{font:inherit}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);margin-top:4px}
+textarea{min-height:110px;resize:vertical}
+label{display:block;font-weight:600;font-size:14px;margin-top:12px}
+button,.btn{display:inline-block;border:0;border-radius:8px;padding:12px 16px;font-weight:700;background:var(--green);color:#fff;cursor:pointer;text-align:center;text-decoration:none}
+button.full,.btn.full{width:100%;margin-top:16px}
+button.alt{background:#fff;color:var(--green);border:1px solid var(--green)}
+button.danger{background:var(--red)}
+button:disabled{opacity:.55}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.filters .wide{grid-column:1/3}
+.filters input,.filters select{margin-top:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;display:block}
+.card .ph{aspect-ratio:1/1;background:#e4ebe7;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+.card img{width:100%;height:100%;object-fit:cover;display:block}
+.card .b{padding:8px 10px 10px}
+.card .t{font-weight:600;font-size:14px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.price{font-weight:800;color:var(--green)}
+.small{font-size:13px;color:var(--muted)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.msg{padding:10px 12px;border-radius:8px;margin:10px 0;font-size:14px}
+.msg.err{background:#fde8e6;color:var(--red)}
+.msg.ok{background:#e1f3e9;color:var(--green-d)}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.tabs button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.gallery{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px}
+.gallery img{height:260px;border-radius:10px;flex:none;max-width:90%}
+.empty{text-align:center;color:var(--muted);padding:34px 10px}
+.row{display:flex;gap:8px;margin-top:12px}
+.row button{flex:1}
+.spin{text-align:center;padding:30px;color:var(--muted)}
+.previews{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.previews img{width:64px;height:64px;object-fit:cover;border-radius:6px}
+h2{font-size:20px;margin-bottom:8px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>Phoebe <span>Market Place</span></h1></header>
+<main id="app"><div class="spin">Loading…</div></main>
+<nav>
+  <a href="#/" id="n-home">Browse</a>
+  <a href="#/sell" id="n-sell">Sell</a>
+  <a href="#/account" id="n-account">Account</a>
+</nav>
+
+<script>
+// ---- Settings (publishable key only: safe for public apps) ----
+const SUPABASE_URL = 'https://vmnxbsqsdvkmiqzyfcxo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_jdg2dYI_6PqRl1YCYQFvQQ_Gv35QnNn';
+const BUCKET = 'product-images';
+const MAX_IMAGES = 4;
+const MAX_BYTES = 5 * 1024 * 1024;
+const OK_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+const STATES = ['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT Abuja','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'];
+const CATEGORIES = ['Phones & Tablets','Electronics','Fashion','Home & Garden','Vehicles','Property','Beauty & Health','Food & Agriculture','Services','Other'];
+const CONDITIONS = ['New','Used','Refurbished'];
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const app = document.getElementById('app');
+let user = null;
+let recovering = false;
+const filters = { search: '', category: '', state: '', sort: 'new' };
+
+// ---- Helpers ----
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const naira = k => '\u20A6' + (Number(k) / 100).toLocaleString('en-NG', { maximumFractionDigits: 2 });
+const opts = (list, sel, blank) => (blank ? `<option value="">${esc(blank)}</option>` : '') + list.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+const firstImg = p => (Array.isArray(p.image_urls) && p.image_urls[0]) || '';
+const msg = (type, text) => text ? `<div class="msg ${type}" role="alert">${esc(text)}</div>` : '';
+const nice = e => {
+  const t = (e && e.message) || String(e);
+  if (/Invalid login/i.test(t)) return 'Wrong email or password.';
+  if (/already registered/i.test(t)) return 'This email already has an account. Try logging in.';
+  if (/row-level security/i.test(t)) return 'You are not allowed to do that.';
+  if (/Failed to fetch|NetworkError/i.test(t)) return 'No internet connection. Check your data and try again.';
+  return t;
+};
+function setNav() {
+  const h = location.hash || '#/';
+  ['home', 'sell', 'account'].forEach(k => document.getElementById('n-' + k).classList.remove('on'));
+  const k = h.startsWith('#/sell') ? 'sell' : h.startsWith('#/account') ? 'account' : 'home';
+  document.getElementById('n-' + k).classList.add('on');
+}
+
+// ---- Router ----
+async function route() {
+  setNav();
+  if (recovering) return viewRecovery();
+  const h = location.hash || '#/';
+  window.scrollTo(0, 0);
+  try {
+    if (h.startsWith('#/p/')) return await viewProduct(decodeURIComponent(h.slice(4)));
+    if (h.startsWith('#/sell')) return viewSell();
+    if (h.startsWith('#/account')) return await viewAccount();
+    return await viewHome();
+  } catch (e) {
+    app.innerHTML = msg('err', nice(e)) + '<button class="full" onclick="route()">Try again</button>';
+  }
+}
+window.addEventListener('hashchange', route);
+
+// ---- Home: browse, search, filter, sort ----
+async function viewHome() {
+  app.innerHTML = `
+    <div class="filters">
+      <input class="wide" id="f-search" type="search" placeholder="Search products" value="${esc(filters.search)}">
+      <select id="f-cat">${opts(CATEGORIES, filters.category, 'All categories')}</select>
+      <select id="f-state">${opts(STATES, filters.state, 'All Nigeria')}</select>
+      <select id="f-sort" class="wide">
+        <option value="new" ${filters.sort === 'new' ? 'selected' : ''}>Newest first</option>
+        <option value="low" ${filters.sort === 'low' ? 'selected' : ''}>Price: low to high</option>
+        <option value="high" ${filters.sort === 'high' ? 'selected' : ''}>Price: high to low</option>
+      </select>
+    </div>
+    <div id="list"><div class="spin">Loading products…</div></div>`;
+  let timer;
+  document.getElementById('f-search').addEventListener('input', e => { filters.search = e.target.value; clearTimeout(timer); timer = setTimeout(loadList, 400); });
+  document.getElementById('f-cat').addEventListener('change', e => { filters.category = e.target.value; loadList(); });
+  document.getElementById('f-state').addEventListener('change', e => { filters.state = e.target.value; loadList(); });
+  document.getElementById('f-sort').addEventListener('change', e => { filters.sort = e.target.value; loadList(); });
+  loadList();
+}
+async function loadList() {
+  const box = document.getElementById('list');
+  if (!box) return;
+  box.innerHTML = '<div class="spin">Loading products…</div>';
+  let q = sb.from('products').select('id,title,price_kobo,state,city,image_urls,created_at').eq('status', 'active');
+  const term = filters.search.replace(/[%_,()*\\]/g, ' ').trim();
+  if (term) q = q.ilike('title', '%' + term + '%');
+  if (filters.category) q = q.eq('category', filters.category);
+  if (filters.state) q = q.eq('state', filters.state);
+  if (filters.sort === 'low') q = q.order('price_kobo', { ascending: true });
+  else if (filters.sort === 'high') q = q.order('price_kobo', { ascending: false });
+  else q = q.order('created_at', { ascending: false });
+  const { data, error } = await q.limit(60);
+  if (!document.getElementById('list')) return;
+  if (error) { box.innerHTML = msg('err', nice(error)); return; }
+  if (!data.length) { box.innerHTML = '<div class="empty">No products found.<br>Try a different search, or be the first to <a href="#/sell">sell something</a>.</div>'; return; }
+  box.innerHTML = '<div class="grid">' + data.map(p => `
+    <a class="card" href="#/p/${encodeURIComponent(p.id)}">
+      <div class="ph">${firstImg(p) ? `<img loading="lazy" src="${esc(firstImg(p))}" alt="">` : 'No photo'}</div>
+      <div class="b"><div class="t">${esc(p.title)}</div><div class="price">${naira(p.price_kobo)}</div>
+      <div class="small">${esc([p.city, p.state].filter(Boolean).join(', '))}</div></div>
+    </a>`).join('') + '</div>';
+}
+
+// ---- Product detail ----
+async function viewProduct(id) {
+  app.innerHTML = '<div class="spin">Loading…</div>';
+  const { data: p, error } = await sb.from('products').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!p) { app.innerHTML = '<div class="empty">This product is no longer available.<br><a href="#/">Back to browse</a></div>'; return; }
+  let seller = null;
+  const r = await sb.from('public_profiles').select('display_name,city,state,is_verified').eq('id', p.seller_id).maybeSingle();
+  if (!r.error) seller = r.data;
+  const imgs = Array.isArray(p.image_urls) ? p.image_urls : [];
+  const mine = user && user.id === p.seller_id;
+  app.innerHTML = `
+    <a href="#/" class="small">&larr; Back to browse</a>
+    ${imgs.length ? '<div class="gallery" style="margin-top:10px">' + imgs.map(u => `<img src="${esc(u)}" alt="">`).join('') + '</div>' : '<div class="panel empty" style="margin-top:10px">No photos</div>'}
+    <div class="panel">
+      <h2>${esc(p.title)}</h2>
+      <div class="price" style="font-size:22px">${naira(p.price_kobo)}</div>
+      <p class="small">${esc(p.category || '')} &bull; ${esc(p.condition || '')} &bull; ${esc([p.city, p.state].filter(Boolean).join(', '))}</p>
+      ${p.status !== 'active' ? `<div class="msg err">This item is ${esc(p.status)}.</div>` : ''}
+      <p style="margin-top:10px;white-space:pre-wrap">${esc(p.description || '')}</p>
+    </div>
+    <div class="panel"><strong>Seller</strong><br>${esc(seller ? seller.display_name : 'Seller')}${seller && seller.is_verified ? ' (verified)' : ''}
+      <div class="small">${esc(seller ? [seller.city, seller.state].filter(Boolean).join(', ') : '')}</div></div>
+    ${mine ? `<div class="row"><button class="alt" id="b-sold">Mark as sold</button><button class="danger" id="b-del">Delete</button></div><div id="pmsg"></div>`
+           : `<div class="msg ok">Ordering, favorites and chat with the seller are coming in the next update.</div>`}`;
+  if (mine) {
+    document.getElementById('b-sold').onclick = async () => {
+      const { error } = await sb.from('products').update({ status: 'sold' }).eq('id', p.id);
+      document.getElementById('pmsg').innerHTML = error ? msg('err', nice(error)) : msg('ok', 'Marked as sold.');
+    };
+    document.getElementById('b-del').onclick = async () => {
+      if (!confirm('Delete this listing permanently?')) return;
+      const { error } = await sb.from('products').delete().eq('id', p.id);
+      if (error) document.getElementById('pmsg').innerHTML = msg('err', nice(error));
+      else location.hash = '#/account';
+    };
+  }
+}
+
+// ---- Sell: create a listing with photos ----
+function viewSell() {
+  if (!user) {
+    app.innerHTML = '<div class="panel empty">Log in or register to sell.<br><br><a class="btn" href="#/account">Go to Account</a></div>';
+    return;
+  }
+  app.innerHTML = `
+    <h2>Sell a product</h2>
+    <div class="panel">
+      <label>Title<input id="s-title" maxlength="100" placeholder="e.g. Tecno Spark 10, 128GB"></label>
+      <label>Description<textarea id="s-desc" maxlength="2000" placeholder="Describe the item, any faults, delivery options"></textarea></label>
+      <label>Price in naira (\u20A6)<input id="s-price" type="number" inputmode="decimal" min="1" step="any" placeholder="e.g. 85000"></label>
+      <label>Category<select id="s-cat">${opts(CATEGORIES, '')}</select></label>
+      <label>Condition<select id="s-cond">${opts(CONDITIONS, '')}</select></label>
+      <label>State<select id="s-state">${opts(STATES, '', 'Choose state')}</select></label>
+      <label>City or town<input id="s-city" maxlength="60" placeholder="e.g. Ikeja"></label>
+      <label>Photos (up to ${MAX_IMAGES}, JPG/PNG/WebP, max 5 MB each)<input id="s-files" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+      <div class="previews" id="s-prev"></div>
+      <div id="s-msg"></div>
+      <button class="full" id="s-go">Publish listing</button>
+    </div>`;
+  document.getElementById('s-files').addEventListener('change', e => {
+    const box = document.getElementById('s-prev'); box.innerHTML = '';
+    [...e.target.files].slice(0, MAX_IMAGES).forEach(f => { const i = document.createElement('img'); i.src = URL.createObjectURL(f); box.appendChild(i); });
+  });
+  document.getElementById('s-go').onclick = publish;
+}
+async function publish() {
+  const out = document.getElementById('s-msg');
+  const btn = document.getElementById('s-go');
+  const title = document.getElementById('s-title').value.trim();
+  const description = document.getElementById('s-desc').value.trim();
+  const naira_ = parseFloat(document.getElementById('s-price').value);
+  const state = document.getElementById('s-state').value;
+  const city = document.getElementById('s-city').value.trim();
+  const files = [...document.getElementById('s-files').files];
+  if (title.length < 3) return out.innerHTML = msg('err', 'Enter a title (at least 3 characters).');
+  if (!isFinite(naira_) || naira_ <= 0 || naira_ > 1e9) return out.innerHTML = msg('err', 'Enter a valid price greater than zero.');
+  if (!state) return out.innerHTML = msg('err', 'Choose a state.');
+  if (!city) return out.innerHTML = msg('err', 'Enter your city or town.');
+  if (files.length > MAX_IMAGES) return out.innerHTML = msg('err', 'Choose at most ' + MAX_IMAGES + ' photos.');
+  for (const f of files) {
+    if (!OK_TYPES.includes(f.type)) return out.innerHTML = msg('err', f.name + ' is not a JPG, PNG or WebP image.');
+    if (f.size > MAX_BYTES) return out.innerHTML = msg('err', f.name + ' is bigger than 5 MB.');
+  }
+  btn.disabled = true; btn.textContent = 'Publishing…'; out.innerHTML = '';
+  try {
+    const urls = [];
+    for (const f of files) {
+      const ext = f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg';
+      const path = user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const up = await sb.storage.from(BUCKET).upload(path, f, { contentType: f.type, upsert: false });
+      if (up.error) throw up.error;
+      urls.push(sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
+    }
+    const row = {
+      seller_id: user.id, title, description, price_kobo: Math.round(naira_ * 100),
+      category: document.getElementById('s-cat').value, condition: document.getElementById('s-cond').value,
+      state, city, image_urls: urls, status: 'active'
+    };
+    const { data, error } = await sb.from('products').insert(row).select('id').single();
+    if (error) throw error;
+    location.hash = '#/p/' + encodeURIComponent(data.id);
+  } catch (e) {
+    out.innerHTML = msg('err', nice(e));
+    btn.disabled = false; btn.textContent = 'Publish listing';
+  }
+}
+
+// ---- Account: register, login, reset, profile ----
+let authTab = 'login';
+async function viewAccount() {
+  if (!user) return viewAuth();
+  app.innerHTML = '<div class="spin">Loading…</div>';
+  const { data: pr } = await sb.from('profiles').select('display_name,phone,role,state,city').eq('id', user.id).maybeSingle();
+  const p = pr || {};
+  const { data: mine } = await sb.from('products').select('id,title,price_kobo,status,image_urls').eq('seller_id', user.id).order('created_at', { ascending: false });
+  app.innerHTML = `
+    <h2>My account</h2>
+    <div class="panel">
+      <div class="small">${esc(user.email)} &bull; ${esc(p.role || 'buyer')}</div>
+      <label>Name<input id="a-name" maxlength="60" value="${esc(p.display_name)}"></label>
+      <label>Phone (private, only you can see it)<input id="a-phone" type="tel" maxlength="20" value="${esc(p.phone)}"></label>
+      <label>State<select id="a-state">${opts(STATES, p.state, 'Choose state')}</select></label>
+      <label>City or town<input id="a-city" maxlength="60" value="${esc(p.city)}"></label>
+      <div id="a-msg"></div>
+      <button class="full" id="a-save">Save changes</button>
+    </div>
+    <h2>My listings</h2>
+    ${(mine && mine.length) ? '<div class="grid">' + mine.map(x => `
+      <a class="card" href="#/p/${encodeURIComponent(x.id)}"><div class="ph">${firstImg(x) ? `<img src="${esc(firstImg(x))}" alt="">` : 'No photo'}</div>
+      <div class="b"><div class="t">${esc(x.title)}</div><div class="price">${naira(x.price_kobo)}</div><div class="small">${esc(x.status)}</div></div></a>`).join('') + '</div>'
+      : '<div class="empty">You have not listed anything yet.<br><a href="#/sell">Sell your first product</a></div>'}
+    <button class="full alt" id="a-out">Log out</button>`;
+  document.getElementById('a-save').onclick = async () => {
+    const out = document.getElementById('a-msg');
+    const { error } = await sb.from('profiles').update({
+      display_name: document.getElementById('a-name').value.trim(),
+      phone: document.getElementById('a-phone').value.trim(),
+      state: document.getElementById('a-state').value || null,
+      city: document.getElementById('a-city').value.trim()
+    }).eq('id', user.id);
+    out.innerHTML = error ? msg('err', nice(error)) : msg('ok', 'Saved.');
+  };
+  document.getElementById('a-out').onclick = async () => { await sb.auth.signOut(); };
+}
+function viewAuth(note) {
+  app.innerHTML = `
+    <div class="tabs">
+      <button class="${authTab === 'login' ? 'on' : ''}" data-t="login">Log in</button>
+      <button class="${authTab === 'register' ? 'on' : ''}" data-t="register">Register</button>
+      <button class="${authTab === 'reset' ? 'on' : ''}" data-t="reset">Forgot</button>
+    </div>
+    <div class="panel">
+      ${authTab === 'register' ? `<label>Your name<input id="u-name" maxlength="60" autocomplete="name"></label>` : ''}
+      <label>Email<input id="u-email" type="email" autocomplete="email" inputmode="email"></label>
+      ${authTab !== 'reset' ? `<label>Password${authTab === 'register' ? ' (at least 8 characters)' : ''}<input id="u-pass" type="password" autocomplete="${authTab === 'login' ? 'current-password' : 'new-password'}"></label>` : ''}
+      ${authTab === 'register' ? `<label>I want to<select id="u-role"><option value="buyer">Buy</option><option value="seller">Sell</option><option value="both">Buy and sell</option></select></label>` : ''}
+      <div id="u-msg">${note || ''}</div>
+      <button class="full" id="u-go">${authTab === 'login' ? 'Log in' : authTab === 'register' ? 'Create account' : 'Send reset link'}</button>
+    </div>`;
+  app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { authTab = b.dataset.t; viewAuth(); });
+  document.getElementById('u-go').onclick = doAuth;
+}
+async function doAuth() {
+  const out = document.getElementById('u-msg'), btn = document.getElementById('u-go');
+  const email = document.getElementById('u-email').value.trim();
+  const passEl = document.getElementById('u-pass');
+  const pass = passEl ? passEl.value : '';
+  if (!/^\S+@\S+\.\S+$/.test(email)) return out.innerHTML = msg('err', 'Enter a valid email address.');
+  const label = btn.textContent;
+  const back = location.origin + location.pathname;
+  btn.disabled = true; btn.textContent = 'Please wait…';
+  try {
+    if (authTab === 'login') {
+      if (!pass) throw new Error('Enter your password.');
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+    } else if (authTab === 'register') {
+      const name = document.getElementById('u-name').value.trim();
+      if (name.length < 2) throw new Error('Enter your name.');
+      if (pass.length < 8) throw new Error('Password must be at least 8 characters.');
+      const { data, error } = await sb.auth.signUp({ email, password: pass,
+        options: { emailRedirectTo: back, data: { display_name: name, role: document.getElementById('u-role').value } } });
+      if (error) throw error;
+      if (!data.session) {
+        out.innerHTML = msg('ok', 'Account created. Check your email and tap the confirmation link, then log in.');
+        btn.disabled = false; btn.textContent = label; return;
+      }
+    } else {
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: back });
+      if (error) throw error;
+      out.innerHTML = msg('ok', 'If that email has an account, a reset link is on its way.');
+      btn.disabled = false; btn.textContent = label; return;
+    }
+  } catch (e) {
+    out.innerHTML = msg('err', nice(e));
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+function viewRecovery() {
+  app.innerHTML = `<h2>Set a new password</h2><div class="panel">
+    <label>New password (at least 8 characters)<input id="r-pass" type="password" autocomplete="new-password"></label>
+    <div id="r-msg"></div><button class="full" id="r-go">Save new password</button></div>`;
+  document.getElementById('r-go').onclick = async () => {
+    const p = document.getElementById('r-pass').value, out = document.getElementById('r-msg');
+    if (p.length < 8) return out.innerHTML = msg('err', 'Password must be at least 8 characters.');
+    const { error } = await sb.auth.updateUser({ password: p });
+    if (error) return out.innerHTML = msg('err', nice(error));
+    recovering = false; location.hash = '#/account'; route();
+  };
+}
+
+// ---- Start ----
+sb.auth.onAuthStateChange((event, session) => {
+  user = session ? session.user : null;
+  if (event === 'PASSWORD_RECOVERY') recovering = true;
+  setTimeout(route, 0);
+});
+sb.auth.getSession().then(({ data }) => { user = data.session ? data.session.user : null; route(); });
+</script>
+</body>
+</html>
